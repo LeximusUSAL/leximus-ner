@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LexiMus NER — Extractor de entidades musicales</title>
+  <style>
+    :root {
+      --azul:   #1a3a6c;
+      --rojo:   #c0392b;
+      --verde:  #1e8449;
+      --gris:   #f4f6f9;
+      --border: #dde3ec;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--gris); color: #222; line-height: 1.6; }
+
+    /* ── CABECERA ── */
+    header {
+      background: linear-gradient(135deg, #0d1b3e 0%, #1a3a6c 60%, #2471a3 100%);
+      color: #fff; padding: 48px 40px 36px;
+    }
+    header .eyebrow {
+      font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+      opacity: 0.6; margin-bottom: 10px;
+    }
+    header h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+    header h1 span { color: #7ecbff; }
+    header .subtitle { font-size: 1rem; opacity: 0.8; margin-top: 10px; max-width: 680px; }
+    header .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    header .badge {
+      font-size: 0.75rem; padding: 4px 12px; border-radius: 20px;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    /* ── CONTENIDO ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ── TARJETAS STAT ── */
+    .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
+    .stat-card {
+      flex: 1; min-width: 160px; background: #fff;
+      border-radius: 10px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      text-align: center; border-top: 4px solid var(--azul);
+    }
+    .stat-card.rojo  { border-top-color: var(--rojo); }
+    .stat-card.verde { border-top-color: var(--verde); }
+    .stat-card.morado{ border-top-color: #8e44ad; }
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--azul); }
+    .stat-card.rojo  .stat-num { color: var(--rojo); }
+    .stat-card.verde .stat-num { color: var(--verde); }
+    .stat-card.morado .stat-num { color: #8e44ad; }
+    .stat-label { font-size: 0.82rem; color: #666; margin-top: 4px; }
+
+    /* ── SECCIONES ── */
+    section { margin-bottom: 40px; }
+    h2 {
+      font-size: 1.25rem; font-weight: 700; color: var(--azul);
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    h2 .icon { font-size: 1.2rem; }
+    p { color: #444; margin-bottom: 12px; }
+
+    /* ── CATEGORÍAS ── */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+    .cat-card {
+      background: #fff; border-radius: 8px; padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      border-left: 4px solid #ccc;
+    }
+    .cat-card.comp   { border-color: #e74c3c; }
+    .cat-card.int    { border-color: #2980b9; }
+    .cat-card.cant   { border-color: #27ae60; }
+    .cat-card.grup   { border-color: #8e44ad; }
+    .cat-card.dir    { border-color: #d35400; }
+    .cat-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .cat-card p  { font-size: 0.82rem; color: #666; margin: 0; }
+
+    /* ── PASOS ── */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 20px; }
+    .step {
+      background: #fff; border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      padding: 20px 20px 20px 70px; position: relative;
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute; left: 18px; top: 18px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--azul); color: #fff;
+      font-weight: 800; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--azul); }
+    .step p   { font-size: 0.9rem; margin-bottom: 8px; }
+
+    /* ── CÓDIGO ── */
+    pre, code {
+      font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 0.88rem;
+    }
+    pre {
+      background: #1e2533; color: #e2e8f0; border-radius: 8px;
+      padding: 16px 20px; overflow-x: auto; margin: 10px 0;
+      border: 1px solid #2d3748;
+    }
+    code {
+      background: #eef2ff; color: #1a3a6c;
+      padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+
+    /* ── ALERTA / NOTA ── */
+    .alert {
+      border-radius: 8px; padding: 14px 18px;
+      font-size: 0.88rem; margin: 12px 0;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .alert-info  { background: #eaf3fb; border-left: 4px solid #2980b9; color: #1a4a70; }
+    .alert-ok    { background: #eafaf1; border-left: 4px solid #27ae60; color: #1a5e34; }
+    .alert-warn  { background: #fefce8; border-left: 4px solid #f0c040; color: #7d5a00; }
+    .alert .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── TABLA CSV ── */
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.85rem; background: #fff;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    th { background: var(--azul); color: #fff; padding: 10px 14px; text-align: left; }
+    td { padding: 9px 14px; border-bottom: 1px solid #eee; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f7f9ff; }
+    .tag {
+      display: inline-block; font-size: 0.72rem; padding: 2px 8px;
+      border-radius: 12px; font-weight: 700; color: #fff;
+    }
+    .tag.comp  { background: #e74c3c; }
+    .tag.int   { background: #2980b9; }
+    .tag.cant  { background: #27ae60; }
+    .tag.grup  { background: #8e44ad; }
+    .tag.dir   { background: #d35400; }
+
+    /* ── OUTPUTS ── */
+    .output-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .output-card {
+      background: #fff; border-radius: 8px; padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .output-card .fname {
+      font-family: monospace; font-size: 0.85rem;
+      background: #eef2ff; color: var(--azul);
+      padding: 4px 8px; border-radius: 4px; display: inline-block;
+      margin-bottom: 8px;
+    }
+    .output-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .output-card p  { font-size: 0.82rem; color: #666; margin: 0; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #1a1a2e; color: rgba(255,255,255,0.6);
+      text-align: center; padding: 24px;
+      font-size: 0.82rem; margin-top: 40px;
+    }
+    footer a { color: #7ecbff; text-decoration: none; }
+
+    /* ── BOTÓN DESCARGA ── */
+    .dl-box {
+      display: flex; gap: 14px; flex-wrap: wrap; margin-top: 20px;
+    }
+    .btn-dl {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 8px; font-weight: 700;
+      font-size: 0.92rem; text-decoration: none; transition: opacity .2s;
+    }
+    .btn-dl:hover { opacity: 0.85; }
+    .btn-primary  { background: var(--azul); color: #fff; }
+    .btn-secondary { background: #eef2ff; color: var(--azul); border: 2px solid var(--azul); }
+    .btn-green    { background: var(--verde); color: #fff; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Proyecto LexiMus · PID2022-139589NB-C33</div>
+  <h1>LexiMus <span>NER</span></h1>
+  <p class="subtitle">
+    Extractor de entidades musicales históricas en corpus español.
+    1.035 personas y agrupaciones curadas manualmente — sin dependencias externas.
+  </p>
+  <div class="badges">
+    <span class="badge">Python 3.7+</span>
+    <span class="badge">Sin dependencias</span>
+    <span class="badge">1.035 entidades</span>
+    <span class="badge">Corpus histórico español</span>
+    <span class="badge">CC BY 4.0</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ESTADÍSTICAS -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num">1.035</div>
+      <div class="stat-label">Entidades curadas en el CSV</div>
+    </div>
+    <div class="stat-card rojo">
+      <div class="stat-num">~300</div>
+      <div class="stat-label">Compositores identificados</div>
+    </div>
+    <div class="stat-card verde">
+      <div class="stat-num">~400</div>
+      <div class="stat-label">Intérpretes y cantantes</div>
+    </div>
+    <div class="stat-card morado">
+      <div class="stat-num">~150</div>
+      <div class="stat-label">Agrupaciones musicales</div>
+    </div>
+  </div>
+
+  <!-- QUÉ ES -->
+  <section>
+    <h2><span class="icon">📖</span> ¿Qué es LexiMus NER?</h2>
+    <p>
+      <strong>LexiMus NER</strong> es un recurso de reconocimiento de entidades nombradas (NER) especializado
+      en músicos, compositores, intérpretes, cantantes y agrupaciones musicales de la prensa y revistas
+      españolas históricas (siglos XIX–XX).
+    </p>
+    <p>
+      Está formado por dos elementos: un <strong>CSV con 1.035 entidades</strong> curadas manualmente
+      a partir del corpus ONDAS (1925–1935) y otras publicaciones, y un <strong>script Python</strong>
+      que busca esas entidades en cualquier corpus de archivos <code>.txt</code> usando expresiones regulares.
+      No requiere spaCy ni ninguna biblioteca de terceros.
+    </p>
+    <div class="alert alert-ok">
+      <span class="icon">✓</span>
+      <span>
+        El script funciona con <strong>Python 3.7 o superior sin instalar nada más</strong>.
+        Solo necesitas descargar los dos archivos y apuntarlo a tu corpus.
+      </span>
+    </div>
+  </section>
+
+  <!-- CATEGORÍAS -->
+  <section>
+    <h2><span class="icon">🏷️</span> Categorías de entidades</h2>
+    <div class="cat-grid">
+      <div class="cat-card comp">
+        <h3>COMPOSITOR</h3>
+        <p>Compositores activos en prensa española: Falla, Albéniz, Granados, Brahms, Mozart…</p>
+      </div>
+      <div class="cat-card int">
+        <h3>INTERPRETE</h3>
+        <p>Instrumentistas: pianistas, violinistas, directores de orquesta, concertistas…</p>
+      </div>
+      <div class="cat-card cant">
+        <h3>CANTANTE</h3>
+        <p>Voces líricas y populares: sopranos, tenores, cantaoras, cupletistas…</p>
+      </div>
+      <div class="cat-card grup">
+        <h3>AGRUPACION</h3>
+        <p>Orquestas, bandas, coros, cuartetos, coblas y otras formaciones colectivas.</p>
+      </div>
+      <div class="cat-card dir">
+        <h3>DIRECTOR</h3>
+        <p>Directores de orquesta y agrupaciones cuando se distinguen del rol de intérprete.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTRUCTURA DEL CSV -->
+  <section>
+    <h2><span class="icon">📊</span> Estructura del CSV</h2>
+    <p>El archivo <code>entidades_ner_leximus.csv</code> tiene seis columnas:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Columna</th>
+          <th>Descripción</th>
+          <th>Ejemplo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>texto</code></td>
+          <td>Forma encontrada en el corpus (puede tener variantes ortográficas)</td>
+          <td>Falla</td>
+        </tr>
+        <tr>
+          <td><code>etiqueta</code></td>
+          <td>Tipo de entidad</td>
+          <td><span class="tag comp">COMPOSITOR</span></td>
+        </tr>
+        <tr>
+          <td><code>variante_limpia</code></td>
+          <td>Forma normalizada sin apodos ni erratas</td>
+          <td>Manuel de Falla</td>
+        </tr>
+        <tr>
+          <td><code>instrumento_rol</code></td>
+          <td>Instrumento principal o rol artístico (opcional)</td>
+          <td>piano</td>
+        </tr>
+        <tr>
+          <td><code>notas</code></td>
+          <td>Notas de curación (apodos, restricciones de contexto…)</td>
+          <td>Apodo: «Don Manuel»</td>
+        </tr>
+        <tr>
+          <td><code>mismo_que</code></td>
+          <td>Nombre canónico cuando <em>texto</em> es un alias</td>
+          <td>Manuel de Falla</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="alert alert-info" style="margin-top:14px">
+      <span class="icon">ℹ️</span>
+      <span>
+        Puedes añadir nuevas entidades al CSV con cualquier editor de hojas de cálculo.
+        El script lee el CSV en cada ejecución, así que los cambios se aplican de inmediato.
+      </span>
+    </div>
+  </section>
+
+  <!-- CÓMO SE USA -->
+  <section>
+    <h2><span class="icon">🚀</span> Cómo usar el script</h2>
+    <div class="steps">
+
+      <div class="step">
+        <h3>Descarga los dos archivos</h3>
+        <p>
+          Necesitas <code>buscar_entidades_leximus.py</code> y <code>entidades_ner_leximus.csv</code>
+          en la <strong>misma carpeta</strong>.
+        </p>
+        <pre><code># Opción A — clonar el repositorio completo
+git clone https://github.com/LeximusUSAL/leximus-ner.git
+cd leximus-ner
+
+# Opción B — descargar solo los dos archivos esenciales
+curl -O https://raw.githubusercontent.com/LeximusUSAL/leximus-ner/main/buscar_entidades_leximus.py
+curl -O https://raw.githubusercontent.com/LeximusUSAL/leximus-ner/main/entidades_ner_leximus.csv</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>Prepara tu corpus</h3>
+        <p>
+          El script busca en archivos <code>.txt</code> con codificación <strong>UTF-8</strong>.
+          Pueden estar todos en una carpeta o en subcarpetas (se busca de forma recursiva).
+        </p>
+        <p>
+          Si tus archivos tienen nombre con fecha (<code>ondas_1927-03-15.txt</code>),
+          el script extrae la fecha automáticamente para cada mención.
+        </p>
+        <div class="alert alert-warn">
+          <span class="icon">⚠️</span>
+          <span>
+            Los archivos deben estar en UTF-8. Si tienes textos en Latin-1 o Windows-1252,
+            conviértelos primero con <code>iconv -f latin1 -t utf-8 archivo.txt &gt; archivo_utf8.txt</code>
+          </span>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>Ejecuta el script</h3>
+        <p>Abre una terminal, navega a la carpeta donde descargaste los archivos y ejecuta:</p>
+        <pre><code>python3 buscar_entidades_leximus.py</code></pre>
+        <p>El script te pedirá la ruta a tu carpeta de corpus:</p>
+        <pre><code>============================================================
+LexiMus NER — Extractor de entidades musicales
+Proyecto PID2022-139589NB-C33 (USAL/UCM/UR)
+============================================================
+
+Cargando entidades del CSV: /ruta/a/entidades_ner_leximus.csv
+  CSV cargado: 1035 entidades → 1847 patrones de búsqueda
+
+Introduce la ruta a la carpeta con los archivos .txt del corpus.
+Ejemplo: /Users/maria/corpus/ondas_txt
+
+Ruta al corpus: <escribe aquí la ruta y pulsa Enter></code></pre>
+      </div>
+
+      <div class="step">
+        <h3>Consulta los resultados</h3>
+        <p>El script genera tres archivos en la carpeta del corpus:</p>
+        <div class="output-grid">
+          <div class="output-card">
+            <div class="fname">resultados_leximus.txt</div>
+            <h3>Listado de texto</h3>
+            <p>Resumen legible con todas las entidades, variantes detectadas y número de menciones por archivo.</p>
+          </div>
+          <div class="output-card">
+            <div class="fname">resultados_leximus.json</div>
+            <h3>Datos completos</h3>
+            <p>JSON con todas las menciones, contextos, fechas y variantes. Ideal para análisis posteriores.</p>
+          </div>
+          <div class="output-card">
+            <div class="fname">resultados_leximus.html</div>
+            <h3>Revisión interactiva</h3>
+            <p>Abre en el navegador. Permite marcar entidades como correctas o falsos positivos y exportar la revisión.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- EJEMPLO DE SALIDA -->
+  <section>
+    <h2><span class="icon">📄</span> Ejemplo de salida (fragmento JSON)</h2>
+    <pre><code>{
+  "generado": "2026-03-27T10:00:00",
+  "herramienta": "LexiMus NER — buscar_entidades_leximus.py",
+  "entidades": {
+    "COMPOSITOR": [
+      {
+        "nombre": "Manuel de Falla",
+        "variantes": ["Falla", "M. de Falla"],
+        "menciones": 47,
+        "archivos": 12,
+        "lista_menciones": [
+          {
+            "nombre_original": "Falla",
+            "nombre_canonico": "Manuel de Falla",
+            "etiqueta": "COMPOSITOR",
+            "archivo": "ondas_1927-03-15.txt",
+            "fecha": "1927-03-15",
+            "contexto": "…interpretó obras de Falla ante un público entregado…"
+          }
+        ]
+      }
+    ]
+  }
+}</code></pre>
+  </section>
+
+  <!-- AMPLIAR CSV -->
+  <section>
+    <h2><span class="icon">✏️</span> Cómo ampliar el CSV con nuevas entidades</h2>
+    <p>
+      Abre <code>entidades_ner_leximus.csv</code> con Excel, LibreOffice Calc o cualquier editor de texto
+      y añade una fila por cada nueva entidad:
+    </p>
+    <table>
+      <thead>
+        <tr><th>texto</th><th>etiqueta</th><th>variante_limpia</th><th>instrumento_rol</th><th>notas</th><th>mismo_que</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Pilar Lorengar</td>
+          <td><span class="tag cant">CANTANTE</span></td>
+          <td>Pilar Lorengar</td>
+          <td>soprano</td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Lorengar</td>
+          <td><span class="tag cant">CANTANTE</span></td>
+          <td>Pilar Lorengar</td>
+          <td></td>
+          <td></td>
+          <td>Pilar Lorengar</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="alert alert-ok" style="margin-top:14px">
+      <span class="icon">✓</span>
+      <span>
+        Cuando el apellido solo puede referirse a dos personas distintas, añade ambas con el mismo
+        <code>texto</code> pero diferente <code>mismo_que</code> — el script detectará la más larga primero
+        y no solapará coincidencias.
+      </span>
+    </div>
+  </section>
+
+  <!-- CITAR -->
+  <section>
+    <h2><span class="icon">📚</span> Cómo citar este recurso</h2>
+    <pre><code>LexiMus-USAL (2026). LexiMus NER: Extractor de entidades musicales
+para corpus histórico español [Software y datos]. GitHub.
+https://github.com/LeximusUSAL/leximus-ner
+
+Proyecto LexiMus: Léxico y ontología de la música en español
+(PID2022-139589NB-C33). Universidad de Salamanca / UCM / Universidad de La Rioja.</code></pre>
+  </section>
+
+  <!-- DESCARGA -->
+  <section>
+    <h2><span class="icon">⬇️</span> Descargar</h2>
+    <div class="dl-box">
+      <a class="btn-dl btn-primary" href="https://github.com/LeximusUSAL/leximus-ner/archive/refs/heads/main.zip">
+        ⬇ Descargar ZIP completo
+      </a>
+      <a class="btn-dl btn-secondary" href="https://github.com/LeximusUSAL/leximus-ner">
+        GitHub →
+      </a>
+      <a class="btn-dl btn-secondary" href="buscar_entidades_leximus.py" download>
+        buscar_entidades_leximus.py
+      </a>
+      <a class="btn-dl btn-green" href="entidades_ner_leximus.csv" download>
+        entidades_ner_leximus.csv
+      </a>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<footer>
+  <p>
+    LexiMus NER · Proyecto <strong>LexiMus: Léxico y ontología de la música en español</strong> ·
+    PID2022-139589NB-C33<br>
+    Universidad de Salamanca · Instituto Complutense de Ciencias Musicales · Universidad de La Rioja<br>
+    <a href="https://github.com/LeximusUSAL/leximus-ner">GitHub</a> ·
+    Licencia <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+  </p>
+</footer>
+
+</body>
+</html>
