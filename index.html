@@ -321,6 +321,18 @@
         El script lee el CSV en cada ejecución, así que los cambios se aplican de inmediato.
       </span>
     </div>
+    <div class="alert alert-warn" style="margin-top:10px">
+      <span class="icon">ℹ️</span>
+      <span>
+        <strong>¿Por qué el CSV tiene 1.035 filas si hay 984 entidades únicas?</strong>
+        Porque una misma persona o agrupación puede aparecer en el corpus con grafías distintas
+        (errores de OCR, variantes ortográficas, apellido solo, apodos…). Cada variante ocupa
+        su propia fila para que el script pueda detectarla, y la columna <code>mismo_que</code>
+        la vincula a la forma canónica. Las 51 filas extra son esos alias: por ejemplo,
+        <em>banda Creatone</em> → <em>Banda Creatore</em>, o
+        <em>Orfeón Gracense</em> → <em>Orfeón Gracienc</em>.
+      </span>
+    </div>
   </section>
 
   <!-- CÓMO SE USA -->
