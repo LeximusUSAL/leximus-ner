@@ -189,12 +189,12 @@
   <h1>LexiMus <span>NER</span></h1>
   <p class="subtitle">
     Extractor de entidades musicales históricas en corpus español.
-    1.035 personas y agrupaciones curadas manualmente — sin dependencias externas. Actualizado marzo 2026.
+    984 entidades únicas (1.035 variantes y alias) curadas manualmente — sin dependencias externas. Actualizado marzo 2026.
   </p>
   <div class="badges">
     <span class="badge">Python 3.7+</span>
     <span class="badge">Sin dependencias</span>
-    <span class="badge">1.035 entidades</span>
+    <span class="badge">984 entidades únicas</span>
     <span class="badge">Revisado mar. 2026</span>
     <span class="badge">Corpus histórico español</span>
     <span class="badge">CC BY 4.0</span>
@@ -206,19 +206,19 @@
   <!-- ESTADÍSTICAS -->
   <div class="stats">
     <div class="stat-card">
-      <div class="stat-num">1.035</div>
-      <div class="stat-label">Entidades curadas en el CSV</div>
+      <div class="stat-num">984</div>
+      <div class="stat-label">Entidades únicas (1.035 variantes)</div>
     </div>
     <div class="stat-card rojo">
-      <div class="stat-num">317</div>
+      <div class="stat-num">293</div>
       <div class="stat-label">Compositores identificados</div>
     </div>
     <div class="stat-card verde">
-      <div class="stat-num">621</div>
+      <div class="stat-num">603</div>
       <div class="stat-label">Intérpretes y cantantes</div>
     </div>
     <div class="stat-card morado">
-      <div class="stat-num">97</div>
+      <div class="stat-num">88</div>
       <div class="stat-label">Agrupaciones musicales</div>
     </div>
   </div>
@@ -232,7 +232,7 @@
       españolas históricas (siglos XIX–XX).
     </p>
     <p>
-      Está formado por dos elementos: un <strong>CSV con 1.035 entidades</strong> curadas y revisadas manualmente
+      Está formado por dos elementos: un <strong>CSV con 984 entidades únicas</strong> (1.035 filas incluyendo alias y variantes ortográficas) curadas y revisadas manualmente
       a partir del corpus de prensa histórica de principios del siglo XX de LexiMus USAL, y un <strong>script Python</strong>
       que busca esas entidades en cualquier corpus de archivos <code>.txt</code> usando expresiones regulares.
       No requiere spaCy ni ninguna biblioteca de terceros.
@@ -373,7 +373,7 @@ Proyecto PID2022-139589NB-C33 (USAL/UCM/UR)
 ============================================================
 
 Cargando entidades del CSV: /ruta/a/entidades_ner_leximus.csv
-  CSV cargado: 1035 entidades → 1847 patrones de búsqueda
+  CSV cargado: 1035 variantes → 984 entidades únicas
 
 Introduce la ruta a la carpeta con los archivos .txt del corpus.
 Ejemplo: /Users/maria/corpus/ondas_txt
