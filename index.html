@@ -75,7 +75,6 @@
     .cat-card.int    { border-color: #2980b9; }
     .cat-card.cant   { border-color: #27ae60; }
     .cat-card.grup   { border-color: #8e44ad; }
-    .cat-card.dir    { border-color: #d35400; }
     .cat-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
     .cat-card p  { font-size: 0.82rem; color: #666; margin: 0; }
 
@@ -144,7 +143,6 @@
     .tag.int   { background: #2980b9; }
     .tag.cant  { background: #27ae60; }
     .tag.grup  { background: #8e44ad; }
-    .tag.dir   { background: #d35400; }
 
     /* ── OUTPUTS ── */
     .output-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
@@ -191,12 +189,13 @@
   <h1>LexiMus <span>NER</span></h1>
   <p class="subtitle">
     Extractor de entidades musicales históricas en corpus español.
-    1.035 personas y agrupaciones curadas manualmente — sin dependencias externas.
+    1.035 personas y agrupaciones curadas manualmente — sin dependencias externas. Actualizado marzo 2026.
   </p>
   <div class="badges">
     <span class="badge">Python 3.7+</span>
     <span class="badge">Sin dependencias</span>
     <span class="badge">1.035 entidades</span>
+    <span class="badge">Revisado mar. 2026</span>
     <span class="badge">Corpus histórico español</span>
     <span class="badge">CC BY 4.0</span>
   </div>
@@ -211,15 +210,15 @@
       <div class="stat-label">Entidades curadas en el CSV</div>
     </div>
     <div class="stat-card rojo">
-      <div class="stat-num">~300</div>
+      <div class="stat-num">317</div>
       <div class="stat-label">Compositores identificados</div>
     </div>
     <div class="stat-card verde">
-      <div class="stat-num">~400</div>
+      <div class="stat-num">621</div>
       <div class="stat-label">Intérpretes y cantantes</div>
     </div>
     <div class="stat-card morado">
-      <div class="stat-num">~150</div>
+      <div class="stat-num">97</div>
       <div class="stat-label">Agrupaciones musicales</div>
     </div>
   </div>
@@ -233,7 +232,7 @@
       españolas históricas (siglos XIX–XX).
     </p>
     <p>
-      Está formado por dos elementos: un <strong>CSV con 1.035 entidades</strong> curadas manualmente
+      Está formado por dos elementos: un <strong>CSV con 1.035 entidades</strong> curadas y revisadas manualmente
       a partir del corpus de prensa histórica de principios del siglo XX de LexiMus USAL, y un <strong>script Python</strong>
       que busca esas entidades en cualquier corpus de archivos <code>.txt</code> usando expresiones regulares.
       No requiere spaCy ni ninguna biblioteca de terceros.
@@ -257,7 +256,7 @@
       </div>
       <div class="cat-card int">
         <h3>INTERPRETE</h3>
-        <p>Instrumentistas: pianistas, violinistas, directores de orquesta, concertistas…</p>
+        <p>Instrumentistas y directores de orquesta: pianistas, violinistas, guitarristas, concertistas, directores…</p>
       </div>
       <div class="cat-card cant">
         <h3>CANTANTE</h3>
@@ -266,10 +265,6 @@
       <div class="cat-card grup">
         <h3>AGRUPACION</h3>
         <p>Orquestas, bandas, coros, cuartetos, coblas y otras formaciones colectivas.</p>
-      </div>
-      <div class="cat-card dir">
-        <h3>DIRECTOR</h3>
-        <p>Directores de orquesta y agrupaciones cuando se distinguen del rol de intérprete.</p>
       </div>
     </div>
   </section>
